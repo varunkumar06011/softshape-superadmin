@@ -64,8 +64,9 @@ function LoginScreen({ onSuccess }) {
     } catch (err) {
       setError('Invalid superadmin secret');
       clearSecret();
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

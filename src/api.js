@@ -18,15 +18,27 @@ export function hasSecret() {
 
 async function apiCall(path, options = {}) {
   const secret = getSecret();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-superadmin-secret': secret,
-      ...options.headers,
-    },
-  });
-  return res;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-superadmin-secret': secret,
+        ...options.headers,
+      },
+      signal: controller.signal,
+    });
+    return res;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out after 10s');
+    }
+    throw new Error(`Network error: ${err.message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export const api = {
